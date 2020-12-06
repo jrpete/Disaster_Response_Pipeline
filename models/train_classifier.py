@@ -67,6 +67,7 @@ def build_model():
         ('clf', MultiOutputClassifier(RandomForestClassifier()))
     ])
 
+    #takes 1-2 hours to run using these params
     parameters = {'clf__estimator__n_estimators': [50,100],
 
         'clf__estimator__min_samples_split': [2, 4]
