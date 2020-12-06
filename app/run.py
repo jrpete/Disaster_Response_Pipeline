@@ -1,13 +1,14 @@
 import json
 import plotly
 import pandas as pd
+import numpy as np
 
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
 from flask import Flask
 from flask import render_template, request, jsonify
-from plotly.graph_objs import Bar
+from plotly.graph_objs import Bar, Scatter
 from sklearn.externals import joblib
 from sqlalchemy import create_engine
 
@@ -15,6 +16,12 @@ from sqlalchemy import create_engine
 app = Flask(__name__)
 
 def tokenize(text):
+    """Tokenizes then lemmitizes words
+    Args:
+        text (string): The messages to be tokenized
+    Returns:
+        clean_tokens (list): The cleaned messages in tokenized messages
+    """
     tokens = word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
 
@@ -26,25 +33,36 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///data/DisasterResponse.db')
+df = pd.read_sql_table('Messages', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+model = joblib.load("models/classifier.pkl")
 
 
-# index webpage displays cool visuals and receives user input text for model
+
 @app.route('/')
 @app.route('/index')
 def index():
-    
-    # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
+    """index webpage displays visuals and receives user input text for model
+    Args:
+        None
+    Returns:
+        None
+    """
+    # extract the counts and values from the genre column
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
-    # create visuals
-    # TODO: Below is an example - modify to create your own visuals
+    #Extract the Names, Sums, Averages, and Standard Deviations from the individual message columns
+    y = df.iloc[:,4:].values
+    message_sums = y.sum(axis=0)
+    message_avgs = np.average(y,axis=0)
+    message_stds = np.std(y,axis=0)
+    category_names = df.drop(['message', 'genre', 'id', 'original'], axis=1).columns.tolist()
+
+    # Create a Barchart showing the count of messages by Genre
+    # Create a Scatterplot showing the count of individual words from a message by Average, Sums, and Standard Deviations
     graphs = [
         {
             'data': [
@@ -63,6 +81,27 @@ def index():
                     'title': "Genre"
                 }
             }
+        },
+        {
+            'data': [
+                Scatter(
+                    x=message_sums,
+                    y=message_avgs,
+                    mode='markers',
+                    text=category_names,
+                    marker={'size': message_stds*100}
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Message Sums and Averages',
+                'yaxis': {
+                    'title': "Average Occurence of Message Containing Word"
+                },
+                'xaxis': {
+                    'title': "Sum of total Message Containing Word"
+                }
+            }
         }
     ]
     
@@ -74,9 +113,14 @@ def index():
     return render_template('master.html', ids=ids, graphJSON=graphJSON)
 
 
-# web page that handles user query and displays model results
 @app.route('/go')
 def go():
+    """web page that handles user query and displays model results
+    Args:
+        None
+    Returns:
+        None
+    """
     # save user input in query
     query = request.args.get('query', '') 
 

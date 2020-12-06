@@ -4,6 +4,7 @@ import joblib
 import nltk
 import pandas as pd
 from sqlalchemy import create_engine
+import numpy as np 
 
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -66,15 +67,13 @@ def build_model():
         ('clf', MultiOutputClassifier(RandomForestClassifier()))
     ])
 
-    parameters = {
-        'clf__estimator__n_estimators': [10, 20, 50, 100, 200],
-        'clf__estimator__criterion' :['gini', 'entropy'],
-        'clf__estimator__max_depth' : [4,5,6,7,8],
-        'clf__estimator__max_features': ['auto', 'sqrt', 'log2']
-    }
+    parameters = {'clf__estimator__n_estimators': [50,100],
 
+        'clf__estimator__min_samples_split': [2, 4]
+    }
     # Define Pipeline
-    cv_pipeline = GridSearchCV(pipeline, param_grid=parameters)
+    cv_pipeline = GridSearchCV(pipeline, param_grid=parameters, cv=None, verbose=12, n_jobs=-1)
+
 
     return cv_pipeline
 
@@ -91,7 +90,7 @@ def evaluate_model(model, X_test, Y_test, category_names):
     """
     Y_pred = model.predict(X_test)
 
-    print(classification_report(np.hstack(Y_test),np.hstack(Y_pred)))
+    print(classification_report(np.hstack(Y_test.values),np.hstack(Y_pred)))
 
 def save_model(model, model_filepath):
     """Outputs the model to a specified filepath
@@ -112,8 +111,9 @@ def main():
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
         X, Y, category_names = load_data(database_filepath)
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
-        
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y)
+   
+
         print('Building model...')
         model = build_model()
         
@@ -125,7 +125,7 @@ def main():
 
         print('Saving model...\n    MODEL: {}'.format(model_filepath))
         save_model(model, model_filepath)
-
+        
         print('Trained model saved!')
 
     else:
