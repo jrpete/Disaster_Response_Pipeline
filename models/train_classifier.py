@@ -30,6 +30,8 @@ def load_data(database_filepath):
     df = pd.read_sql_table('Messages', engine)
     engine.dispose()
 
+    df = df[df.related != 2]
+
     X = df['message']
     Y = df.drop(['message', 'genre', 'id', 'original'], axis=1)
     category_names = Y.columns.tolist()
