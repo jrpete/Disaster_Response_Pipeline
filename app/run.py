@@ -33,11 +33,11 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///data/DisasterResponse.db')
+engine = create_engine('sqlite:///../data/DisasterResponse.db')
 df = pd.read_sql_table('Messages', engine)
 
 # load model
-model = joblib.load("models/classifier.pkl")
+model = joblib.load("../models/classifier.pkl")
 
 
 
@@ -110,7 +110,7 @@ def index():
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
     
     # render web page with plotly graphs
-    return render_template('master.html', ids=ids, graphJSON=graphJSON)
+    return render_template('templates/master.html', ids=ids, graphJSON=graphJSON)
 
 
 @app.route('/go')
@@ -130,7 +130,7 @@ def go():
 
     # This will render the go.html Please see that file. 
     return render_template(
-        'go.html',
+        'templates/go.html',
         query=query,
         classification_result=classification_results
     )

@@ -92,8 +92,10 @@ def evaluate_model(model, X_test, Y_test, category_names):
         None
     """
     Y_pred = model.predict(X_test)
+    
+    print(classification_report(Y_test, Y_pred, target_names=category_names))
 
-    print(classification_report(np.hstack(Y_test.values),np.hstack(Y_pred)))
+   
 
 def save_model(model, model_filepath):
     """Outputs the model to a specified filepath
@@ -115,8 +117,8 @@ def main():
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
         X, Y, category_names = load_data(database_filepath)
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y)
-   
-
+    
+        
         print('Building model...')
         model = build_model()
         
@@ -125,12 +127,12 @@ def main():
         
         print('Evaluating model...')
         evaluate_model(model, X_test, Y_test, category_names)
-
+        
         print('Saving model...\n    MODEL: {}'.format(model_filepath))
         save_model(model, model_filepath)
         
         print('Trained model saved!')
-
+        
     else:
         print('Please provide the filepath of the disaster messages database '\
               'as the first argument and the filepath of the pickle file to '\
